@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Login de Usuário</title>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Login de Usuário</h2>
+        <form method="POST" action="/login">
+            <label for="user">Usuário</label>
+            <input type="text" id="user" name="user" value="{{ request.form['user'] }}" required minlength="3">
+
+            <label for="password">Senha:</label>
+            <input type="password" id="senha" name="senha" required minlength="8" maxlength="12">
+            
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+
+</body>
+</html>
+# models.py
+class Usuarios:
+    def __init__(self, user, senha):
+        self.user = user
+        self.senha = senha
+
+# Lista de usuários
+lst_users = [
+    Usuarios('user', "abc123"),
+    Usuarios('admin', "adm123")
+]
+# controllers.py
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from models import lst_users
+
+app_login = Blueprint('app_login', __name__)
+
+@app_login.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['user']  # Usar 'user' que é o nome do campo no HTML
+        password = request.form['senha']  # Usar 'senha' que é o nome do campo no HTML
+
+        # Verifica se o usuário e a senha estão corretos
+        for user in lst_users:
+            if user.user == username and user.senha == password:
+                return redirect(url_for('app_login.dashboard'))  # Redireciona para a página de dashboard
+
+        # Se não encontrar, redireciona para a página de login inválido
+        flash('Usuário ou senha inválidos.', 'danger')
+        return redirect(url_for('app_login.login'))  # Redireciona para o login
+
+    return render_template('login.html')
+
+@app_login.route('/dashboard')
+def dashboard():
+    return "Bem-vindo ao Dashboard!"  # Aqui você pode criar uma página HTML para o dashboard
+
+# app.py
+from flask import Flask
+from controllers import app_login
+
+app = Flask(__name__)
+app.secret_key = 'sua_chave_secreta'  # Defina uma chave secreta para o uso do flash
+
+# Registrando o Blueprint
+app.register_blueprint(app_login)
+
+if __name__ == '__main__':
+    app.run(debug=True)
